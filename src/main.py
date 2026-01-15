@@ -4,16 +4,18 @@ import random
 
 
 def main(page: ft.Page):
+    """Main function to set up the blinking color card application"""
+    # Page configuration
     page.title = "Blinking Color Card"
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.theme_mode = ft.ThemeMode.DARK
     page.padding = 20
     
-    # Available colors (red, yellow, blue)
+    # Available colors for blinking
     COLORS = [ft.Colors.RED, ft.Colors.YELLOW, ft.Colors.BLUE]
     
-    # Create a card with blinking animation - fills window height
+    # Create the blinking card container
     card = ft.Container(
         width=320,
         expand=True,  # Fill available vertical space
@@ -47,19 +49,19 @@ def main(page: ft.Page):
         animate_scale=ft.Animation(duration=150, curve=ft.AnimationCurve.BOUNCE_OUT),
     )
     
-    # State variables
-    is_blinking = False
-    blink_task = None
-    last_color = ft.Colors.RED  # Track last color to avoid repeats
+    # Application state variables
+    is_blinking = False  # Tracks if blinking is active
+    blink_task = None   # Stores the async blinking task
+    last_color = ft.Colors.RED  # Tracks last color to avoid repeats
     
     # Language state
-    current_language = "en"  # "en" or "es"
+    current_language = "en"  # "en" for English, "es" for Spanish
     
-    # Language strings
+    # Language strings for internationalization
     lang_strings = {
         "en": {
             "title": "Blink Settings",
-            "interval": "Blink Interval (seconds):",
+            "interval": "Change Intervals:",
             "speed": "Animation Speed:",
             "language": "Display Language:",
             "english": "English",
@@ -71,7 +73,7 @@ def main(page: ft.Page):
         },
         "es": {
             "title": "Configuración de Parpadeo",
-            "interval": "Intervalo de Parpadeo (segundos):",
+            "interval": "Cambiar Intervalos:",
             "speed": "Velocidad de Animación:",
             "language": "Idioma de Pantalla:",
             "english": "Inglés",
@@ -91,10 +93,10 @@ def main(page: ft.Page):
         """Update all displayed text to current language"""
         nonlocal settings_dialog
         
-        # Update dialog
+        # Update dialog title
         settings_dialog.title = ft.Text(get_text("title"), size=20)
         
-        # Update content (recreate with new language)
+        # Update dialog content with new language
         settings_dialog.content = ft.Column(
             width=300,
             controls=[
@@ -114,13 +116,13 @@ def main(page: ft.Page):
             ],
         )
         
-        # Update actions
+        # Update dialog buttons
         settings_dialog.actions = [
             ft.TextButton(get_text("cancel"), on_click=lambda e: page.pop_dialog()),
             ft.TextButton(get_text("start"), on_click=start_blinking),
         ]
         
-        # Update card title
+        # Update card title text
         card.content.controls[1] = ft.Text(
             get_text("card_title"),
             size=20,
@@ -139,12 +141,12 @@ def main(page: ft.Page):
         current_language = e.control.value
         update_language()
     
-    # Slider components for AlertDialog
+    # Slider components for settings dialog
     interval_slider = ft.Slider(
-        min=0.1,
-        max=5.0,
+        min=2.0,
+        max=10.0,
         value=2.0,
-        divisions=49,
+        divisions=80,
         label="Interval: {value}s",
         width=250,
         round=1,  # Show 1 decimal place
@@ -161,16 +163,16 @@ def main(page: ft.Page):
     )
     
     def start_blinking(e):
-        """Start blinking with slider values"""
+        """Start blinking animation with current slider values"""
         nonlocal is_blinking, blink_task
         
-        # Close the dialog
+        # Close the settings dialog
         page.pop_dialog()
         
-        # Start blinking immediately
+        # Start blinking
         is_blinking = True
         card.scale = 1.1
-        fab.visible = False  # Hide FAB when blinking
+        fab.visible = False  # Hide FAB during blinking
         
         # Create and start the blinking task
         blink_task = asyncio.create_task(blink_card())
@@ -179,10 +181,9 @@ def main(page: ft.Page):
         fab.update()
     
     def get_random_color():
-        """Get a random color that's different from the last one"""
+        """Get a random color different from the last one used"""
         available_colors = [c for c in COLORS if c != last_color]
-        new_color = random.choice(available_colors)
-        return new_color
+        return random.choice(available_colors)
     
     async def blink_card():
         """Blink the card with random colors, keeping each color for multiple blinks"""
@@ -191,31 +192,28 @@ def main(page: ft.Page):
         current_color = last_color
         
         while is_blinking:
-            # Get current values from sliders (reads fresh each cycle)
+            # Get current slider values for dynamic control
             speed = speed_slider.value if speed_slider.value > 0 else 1.0
-            interval = interval_slider.value if interval_slider.value >= 0.1 else 0.1
+            interval = interval_slider.value if interval_slider.value >= 2.0 else 2.0
             
             # Fade out (speed adjusted - higher speed = faster)
             fade_time = 0.25 / speed
-            card.opacity = 0.1  # More dramatic fade (was 0.3)
-            card.scale = 0.95  # Slight shrink
+            card.opacity = 0.1
+            card.scale = 0.95
             card.update()
             await asyncio.sleep(fade_time)
             
-            # Change color every 3 blinks, otherwise keep same color
+            # Change color every 3 blinks to create variety
             if color_change_counter >= 3:
                 current_color = get_random_color()
                 last_color = current_color
-                card.bgcolor = current_color
                 color_change_counter = 0
-            else:
-                # Keep current color
-                card.bgcolor = current_color
-                color_change_counter += 1
+            card.bgcolor = current_color
+            color_change_counter += 1
             
             # Fade in (speed adjusted - higher speed = faster)
             card.opacity = 1.0
-            card.scale = 1.0  # Full size
+            card.scale = 1.0
             card.update()
             await asyncio.sleep(fade_time)
             
@@ -223,7 +221,7 @@ def main(page: ft.Page):
             await asyncio.sleep(interval / speed)
     
     def stop_blinking(e):
-        """Stop blinking"""
+        """Stop blinking and reset to initial state"""
         nonlocal is_blinking, blink_task
         
         is_blinking = False
@@ -232,11 +230,11 @@ def main(page: ft.Page):
         card.bgcolor = ft.Colors.RED  # Reset to initial color
         last_color = ft.Colors.RED
         
-        # Cancel the blinking task
+        # Cancel the blinking task if it exists
         if blink_task:
             blink_task.cancel()
         
-        # Update FAB
+        # Reset FAB to visible state
         fab.icon = ft.Icons.FAVORITE
         fab.bgcolor = ft.Colors.BLUE_700
         fab.foreground_color = ft.Colors.RED
@@ -245,7 +243,7 @@ def main(page: ft.Page):
         card.update()
         fab.update()
     
-    # Create the AlertDialog
+    # Create the settings dialog
     settings_dialog = ft.AlertDialog(
         modal=True,
         title=ft.Text(get_text("title"), size=20),
@@ -275,23 +273,23 @@ def main(page: ft.Page):
     )
     
     def on_fab_click(e):
-        """Handle FAB click - either start or stop"""
+        """Handle FAB click - show settings or stop blinking"""
         if is_blinking:
             stop_blinking(e)
         else:
-            # Show dialog to get settings first
+            # Show settings dialog to configure blinking
             page.show_dialog(settings_dialog)
     
     def on_card_click(e):
-        """Handle card click - start or stop blinking immediately"""
+        """Handle card click - toggle blinking immediately"""
         nonlocal is_blinking, blink_task
         
         if is_blinking:
-            # If already blinking, stop it
+            # Stop blinking if already active
             is_blinking = False
             card.scale = 1.0
             card.opacity = 1.0
-            card.bgcolor = ft.Colors.RED  # Reset to initial color
+            card.bgcolor = ft.Colors.RED
             last_color = ft.Colors.RED
             
             # Cancel the blinking task
@@ -310,7 +308,7 @@ def main(page: ft.Page):
             # Start blinking immediately with current slider values
             is_blinking = True
             card.scale = 1.1
-            fab.visible = False  # Hide FAB when blinking
+            fab.visible = False
             
             # Create and start the blinking task
             blink_task = asyncio.create_task(blink_card())
@@ -319,7 +317,7 @@ def main(page: ft.Page):
             fab.update()
     
     def on_hover(e):
-        """Scale card on hover"""
+        """Scale card on hover for visual feedback"""
         if e.data == "true":
             card.scale = 1.05
         else:
@@ -336,15 +334,16 @@ def main(page: ft.Page):
         tooltip=get_text("fab_tooltip"),
     )
     
-    # Add handlers
+    # Add event handlers to card
     card.on_click = on_card_click
+    # card.on_tap_down = on_card_click
     card.on_hover = on_hover
     
-    # Set the floating action button
+    # Set the floating action button on the page
     page.floating_action_button = fab
     
-    # Add the card with expand to fill height
-    display_card=ft.SafeArea(content=card, expand=True)
+    # Add the card wrapped in SafeArea to fill height
+    display_card = ft.SafeArea(content=card, expand=True)
     page.add(display_card)
 
 
