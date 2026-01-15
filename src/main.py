@@ -11,13 +11,14 @@ def main(page: ft.Page):
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.theme_mode = ft.ThemeMode.DARK
     page.padding = 20
+    card_width = page.width
     
     # Available colors for blinking
     COLORS = [ft.Colors.RED, ft.Colors.YELLOW, ft.Colors.BLUE]
     
     # Create the blinking card container
     card = ft.Container(
-        width=320,
+        width=card_width,
         expand=True,  # Fill available vertical space
         bgcolor=ft.Colors.RED,
         border_radius=15,
@@ -98,7 +99,7 @@ def main(page: ft.Page):
         
         # Update dialog content with new language
         settings_dialog.content = ft.Column(
-            width=300,
+            width=card_width-10,
             controls=[
                 ft.Text(get_text("interval"), size=14),
                 interval_slider,
@@ -154,9 +155,9 @@ def main(page: ft.Page):
     
     speed_slider = ft.Slider(
         min=1.0,
-        max=5.0,
+        max=10.0,
         value=1.0,
-        divisions=40,
+        divisions=90,
         label="Speed: {value}x",
         width=250,
         round=1,  # Show 1 decimal place
@@ -248,7 +249,7 @@ def main(page: ft.Page):
         modal=True,
         title=ft.Text(get_text("title"), size=20),
         content=ft.Column(
-            width=300,
+            width=card_width-10,
             controls=[
                 ft.Text(get_text("interval"), size=14),
                 interval_slider,
