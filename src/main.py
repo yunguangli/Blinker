@@ -153,10 +153,10 @@ def main(page: ft.Page):
     )
     
     speed_slider = ft.Slider(
-        min=0.5,
+        min=1.0,
         max=5.0,
         value=1.0,
-        divisions=45,
+        divisions=40,
         label="Speed: {value}x",
         width=250,
         round=1,  # Show 1 decimal place
